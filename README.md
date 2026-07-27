@@ -1,12 +1,12 @@
 Education Model 
 
-This repository contains the code for a project that predicts students' final mathematics grades (G3) using mulitple linear regression and feature selection techniques implemented in R. 
+This repository contains the code for a project that predicts students' final mathematics and Portugese grades (G3) using mulitple linear regression and feature selection techniques implemented in R. 
 
 
 Code Overview 
-The R implemented, specifically for the mathematics, performs the following tasks:
+The R implemented, for the mathematics and Portugese subjects, performs the following tasks:
 
-(1). Loads and preprocess the student performance dataset (mat.)
+(1). Loads and preprocess the student performance dataset (mat.) and (por.)
 
 (2). Converts categorical variables into factors and removes G1 and G2 from the dataset 
 
@@ -14,16 +14,17 @@ The R implemented, specifically for the mathematics, performs the following task
 
 (4). Performs Best Subset, Foward Stepwise, and Backward Stepwise feature selection using leaps package
 
-(5). Selects the models using Cp, BIC, and Adjsuted R^2
+(5). Selects the models using Cp, BIC, and Adjusted R^2.
 
-(6). Evaluates the selected models, included a model using all predicators, using Mean Squared Error on the test dataset 
+(6). Evaluates the selected models, included a model using all predicators, using Mean Squared Error on the test dataset.
+     For por-model.r, cross-validation is also included to evaluate the model. 
 
 Required R Packages: 
 - leaps
 
 Run the project 
 1. Download the student performance dataset
-2. Update the dataset path in mat-model.R if necessary
+2. Update the dataset path in mat-model.R and por-model.r if necessary
 3. Install the required packages
-4. Run mat-model.R
+4. Run mat-model.r and por-model.r
 
