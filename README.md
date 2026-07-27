@@ -6,7 +6,7 @@ This repository contains the code for a project that predicts students' final ma
 Code Overview 
 The R implemented, for the mathematics and Portugese subjects, performs the following tasks:
 
-(1). Loads and preprocess the student performance dataset (mat.) and (por.)
+(1). Loads and preprocess the student performance dataset (mat.) and (por.) from https://archive.ics.uci.edu/dataset/320/student+performance
 
 (2). Converts categorical variables into factors and removes G1 and G2 from the dataset 
 
