@@ -131,3 +131,57 @@ mean((full_pred - test_data$G3)^2) #15.82758
 #Full Predictor Model: better prediction, more complex cause of num. of preds.
 #BIC Model:almost the same prediction as BIC, jsut more simpler for num. of preds.
 #Cp/AdjR^2: bigger model but worse result than full and bic
+
+
+# Visualizations
+# 1. why are failures the strognest predictors
+pdf("mat-visualizations/Failures_vs_G3.pdf", width = 7, height = 5)
+boxplot(G3 ~ failures,
+        data = math_student,
+        main = "Final Grade by Number of Previous Failures",
+        xlab = "Number of Previous Failures",
+        ylab = "Final Grade")
+dev.off()
+
+#2. Feature Selection 
+pdf("mat-visualizations/Model_Selection.pdf", width = 7, height = 5)
+par(mfrow = c(1, 3))
+plot(reg_summary$cp,
+     type = "l",
+     xlab = "Number of Variables",
+     ylab = "Cp",
+     main = "CP")
+
+plot(reg_summary$bic,
+     type = "l",
+     xlab = "Number of Variables",
+     ylab = "BIC",
+     main = "BIC")
+
+plot(reg_summary$adjr2,
+     type = "l",
+     xlab = "Number of Variables",
+     ylab = "Adjusted R²",
+     main = "Adjusted R²")
+
+dev.off()
+
+#3. Test MSE Comparsion 
+pdf("mat-visualizations/TestMSE_Comparison.pdf", width = 7, height = 5)
+mse <- c(Full = 15.82758, 
+        Cp = 16.63068, 
+        BIC = 15.84630, 
+        Adjr2 = 17.10420)
+barplot(mse, ylab = "Test MSE", 
+        main = "Model Comaprison")
+dev.off()
+
+#4. Predicted Values vs Actual Values
+pdf("mat-visualizations/Predicted_VS_Actual.pdf", width = 7, height = 5)
+plot(test_data$G3,
+     full_pred,
+     xlab = "Actual G3",
+     ylab = "Predicted G3",
+     main = "Predicted vs Actual")
+abline(0, 1, col = "red")
+dev.off()
