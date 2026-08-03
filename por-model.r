@@ -19,18 +19,33 @@ por_student[char_factor] <- lapply(por_student[char_factor], as.factor)
 por_student$G1 <- NULL
 por_student$G2 <- NULL
 
-str(por_student)
+summary(por_student$G3)
+sd(por_student$G3)
+cat("Mean:", round(mean(por_student$G3), 2),
+    "| Median:", median(por_student$G3),
+    "| SD:", round(sd(por_student$G3), 2),
+    "| Range:", paste(range(por_student$G3), collapse = "\u2013"), "\n")
+cat("Number of students scoring 0:", sum(por_student$G3 == 0),
+    sprintf("(%.1f%%)", 100 * mean(por_student$G3 == 0)), "\n")
 
+# Histogram
+hist(por_student$G3,
+     breaks = seq(-0.5, 19.5, by = 1),
+     col = "#3B6EA5",
+     border = "white",
+     main = paste0("Distribution of Final Grades (G3), n = ", nrow(por_student)),
+     xlab = "Final Grade (G3)",
+     ylab = "Number of Students")
 
 library(leaps)
 set.seed(1)
 train <- sample(1:nrow(por_student), nrow(por_student) / 2)
 train_data <- por_student[train, ]
 test_data  <- por_student[-train, ]
-# Best subset selection
-regfit_full <- regsubsets(G3 ~ ., data = por_student, nvmax = 39)
-reg_summary <- summary(regfit_full)
 
+# Best subset selection
+regfit_full <- regsubsets(G3 ~ ., data = train_data, nvmax = 39)
+reg_summary <- summary(regfit_full)
 
 par(mfrow = c(2,2))
 plot(reg_summary$rss, xlab = "Number of Variables", ylab = "RSS", type = "l")
@@ -58,7 +73,7 @@ coef(regfit_full, 8)
 # schoolMS, Fedu, studytime, failures, schoolsupyes, higheryes, Dalc, health
 
 # Forward selection
-regfit_fwd <- regsubsets(G3 ~ ., data = por_student, nvmax = 39, method = "forward")
+regfit_fwd <- regsubsets(G3 ~ ., data = train_data, nvmax = 39, method = "forward")
 regfit_fwd_summary <- summary(regfit_fwd)
 
 par(mfrow = c(2,2))
@@ -81,7 +96,7 @@ coef(regfit_fwd, 8)
 # same as Best subset
 
 # Backward selection
-regfit_bwd <- regsubsets(G3 ~ ., data = por_student, nvmax = 39, method = "backward")
+regfit_bwd <- regsubsets(G3 ~ ., data = train_data, nvmax = 39, method = "backward")
 regfit_bwd_summary <- summary(regfit_bwd)
 
 par(mfrow = c(2,2))
@@ -106,31 +121,7 @@ coef(regfit_bwd , 8)
 # The best eight-variable models identified by the best subset selection and forward stepwise selection are the same
 # but are different from the backward stepwise selection.
 
-
-# Validation-Set 
-regfit_best_train <- regsubsets(G3 ~ ., data = train_data, nvmax = 39)
-train_summary <- summary(regfit_best_train)
-test_mat <- model.matrix(G3 ~ ., data = test_data)
-
-
-val_errors <- rep(NA, 39)
-# Iterates over each size i
-for(i in 1:39){
-  # Extract the vector of predictors in the best fit model on i predictors
-  coefi <- coef(regfit_best_train, id = i)
-  # Make predictions using matrix multiplication of the test matrix and the coefficients vector
-  pred <- test_mat[,names(coefi)] %*% coefi
-  # Calculate the MSE
-  val_errors[i] <- mean((test_data$G3 - pred)^2)
-}
-
-min <- which.min(val_errors) # 16
-coef(regfit_best_train, min)
-
-# Plot the errors for each model size
-plot(val_errors, type = 'b')
-points(min, val_errors[min][1], col = "red", cex = 2, pch = 20)
-
+# Cross-validation
 predict.regsubsets <- function(object, newdata, id, ...) {
   form  <- as.formula(object$call[[2]])
   mat   <- model.matrix(form, newdata)
@@ -138,51 +129,50 @@ predict.regsubsets <- function(object, newdata, id, ...) {
   mat[, names(coefi)] %*% coefi
 }
 
-# Cross-validation
 k <- 10
 n <- nrow(por_student)
 set.seed(1)
 folds <- sample(rep(1:k, length = n))
-cv_errors <- matrix(NA, k, 39,
-                    dimnames = list(NULL, paste(1:39)))
+cv_errors <- matrix(NA, k, 39, dimnames = list(NULL, paste(1:39)))
+
 for (j in 1:k) {
-  best_fit <- regsubsets(G3 ~ .,
-                         data = por_student[folds != j, ],
-                         nvmax = 39)
+  best_fit <- regsubsets(G3 ~ ., data = por_student[folds != j, ], nvmax = 39)
   for (i in 1:39) {
     pred <- predict(best_fit, por_student[folds == j, ], id = i)
-    cv_errors[j, i] <-
-      mean((por_student$G3[folds == j] - pred)^2)
+    cv_errors[j, i] <- mean((por_student$G3[folds == j] - pred)^2)
   }
 }
 
 mean_cv_errors <- apply(cv_errors, 2, mean)
-min_cv = which.min(mean_cv_errors) # 35
+min_cv <- which.min(mean_cv_errors)
 
 par(mfrow = c(1, 1))
-plot(mean_cv_errors, type = 'b')
-points(min_cv, mean_cv_errors[min_cv][1], col = "red", cex = 2, pch = 20)
+plot(mean_cv_errors, type = 'b', xlab = "Number of Variables", ylab = "Mean CV MSE")
+points(min_cv, mean_cv_errors[min_cv], col = "red", cex = 2, pch = 20)
+
+se_cv_errors <- apply(cv_errors, 2, sd) / sqrt(k)
+
+one_se_size <- min(which(mean_cv_errors <= mean_cv_errors[min_cv] + se_cv_errors[min_cv]))
+
+points(one_se_size, mean_cv_errors[one_se_size], col = "blue", cex = 2, pch = 20)
+legend("topright", legend = c("CV minimum", "1-SE (simpler) model"), col = c("red","blue"), pch = 20)
+
+cat("CV-optimal size:", min_cv, " | 1-SE rule size:", one_se_size, "\n")
 
 # Full linear model
 full_fit  <- lm(G3 ~ ., data = train_data)
 summary(full_fit)
 full_pred <- predict(full_fit, test_data)
 
-regfit_fwd_train  <- regsubsets(G3 ~ ., data = train_data, nvmax = 39, method = "forward")
-regfit_bwd_train  <- regsubsets(G3 ~ ., data = train_data, nvmax = 39, method = "backward")
-
-fwd_train_summary <- summary(regfit_fwd_train)
-bwd_train_summary <- summary(regfit_bwd_train)
-
-cp_pred    <- predict(regfit_best_train, test_data, id = which.min(train_summary$cp))
-bic_pred   <- predict(regfit_best_train, test_data, id = which.min(train_summary$bic))
-adjr2_pred <- predict(regfit_best_train, test_data, id = which.max(train_summary$adjr2))
-fwd_bic_pred <- predict(regfit_fwd_train, test_data, id = which.min(fwd_train_summary$bic))
-bwd_bic_pred <- predict(regfit_bwd_train, test_data, id = which.min(bwd_train_summary$bic))
+cp_pred      <- predict(regfit_full, test_data, id = which.min(reg_summary$cp))
+bic_pred     <- predict(regfit_full, test_data, id = which.min(reg_summary$bic))
+adjr2_pred   <- predict(regfit_full, test_data, id = which.max(reg_summary$adjr2))
+fwd_bic_pred <- predict(regfit_fwd,  test_data, id = which.min(regfit_fwd_summary$bic))
+bwd_bic_pred <- predict(regfit_bwd,  test_data, id = which.min(regfit_bwd_summary$bic))
 
 # Regression model comparison table
 regression_results <- data.frame(
-  Model = c("Full linear model", "Best subset (Cp)",
+  Model = c("Full linear model (OLS)", "Best subset (Cp)",
             "Best subset (BIC)", "Best subset (AdjR2)", "Forward (BIC)", "Backward (BIC)"),
   Test_MSE = c(
     mean((full_pred - test_data$G3)^2),
@@ -194,6 +184,3 @@ regression_results <- data.frame(
   )
 )
 regression_results[order(regression_results$Test_MSE), ]
-
-# Backward's BIC model (8.925) slightly outperforms forward/best-subset's BIC model (9.056)
-
