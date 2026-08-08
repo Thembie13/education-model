@@ -1,4 +1,4 @@
-# Predict G3 (final scores) for Portugese subjects without G1 and G2 (previous scores)
+# Predict G3 (final scores) for Portuguese subjects without G1 and G2 (previous scores)
 # Load data 
 por_student <- read.csv("student-por.csv", sep = ";")
 str(por_student)
@@ -54,23 +54,23 @@ plot(reg_summary$adjr2, xlab = "Number of Variables", ylab = "Adjusted RSq", typ
 adj_r2_max <- which.max(reg_summary$adjr2)
 points(adj_r2_max, reg_summary$adjr2[adj_r2_max], col ="red", cex = 2, pch = 20)
 coef(regfit_full, 24)
-# schoolMS, sexM, age, addressU, famsizeLE3, Fedu, Mjobhealth, Mjobservices, Mjobteacher, 
-# Fjobservices, Fjobteacher, reasonother, guardianmother, studytime, failures, schoolsupyes, 
-# activitiesyes, higheryes, romanticyes, famrel, freetime, Dalc, health, absences
+# schoolMS, sexM, age, famsizeLE3, Mjobhealth, Mjobother,Mjobservices, Mjobteacher,
+# Fjobservices, Fjobteacher, reasonother, guardianmother, studytime, failures,
+# schoolsupyes, paidyes, activitiesyes, higheryes, romanticyes, famrel,
+# freetime, goout, health, absences
 
 plot(reg_summary$cp, xlab = "Number of Variables", ylab = "Cp", type = "l")
 cp_min <- which.min(reg_summary$cp) 
 points(cp_min, reg_summary$cp[cp_min], col = "red", cex = 2, pch = 20)
 coef(regfit_full, 15)
-# schoolMS, sexM, age, Medu, Fjobteacher, reasonother, guardianmother, 
-# studytime, failures, schoolsupyes, higheryes, romanticyes, 
-# Dalc, health, absences
+# schoolMS, sexM, age, Medu, Fjobteacher, reasonother, studytime, failures,
+# schoolsupyes, activitiesyes, higheryes, romanticyes, freetime, Walc, absences
 
 plot(reg_summary$bic, xlab = "Number of Variables", ylab = "BIC", type = "l")
 bic_min <- which.min(reg_summary$bic) 
 points(bic_min, reg_summary$bic[bic_min], col = "red", cex = 2, pch = 20)
 coef(regfit_full, 8)
-# schoolMS, Fedu, studytime, failures, schoolsupyes, higheryes, Dalc, health
+# schoolMS, age, Fjobteacher, studytime, failures, schoolsupyes, higheryes, romanticyes
 
 # Forward selection
 regfit_fwd <- regsubsets(G3 ~ ., data = train_data, nvmax = 39, method = "forward")
@@ -93,7 +93,6 @@ plot(regfit_fwd_summary$bic, xlab = "Number of Variables", ylab = "BIC", type = 
 bic_min <- which.min(regfit_fwd_summary$bic) 
 points(bic_min, regfit_fwd_summary$bic[bic_min], col = "red", cex = 2, pch = 20)
 coef(regfit_fwd, 8)
-# same as Best subset
 
 # Backward selection
 regfit_bwd <- regsubsets(G3 ~ ., data = train_data, nvmax = 39, method = "backward")
@@ -106,7 +105,6 @@ plot(regfit_bwd_summary$adjr2, xlab = "Number of Variables", ylab = "Adjusted RS
 adj_r2_max <- which.max(regfit_bwd_summary$adjr2) # 24
 points(adj_r2_max, regfit_bwd_summary$adjr2[adj_r2_max], col ="red", cex = 2, pch = 20)
 coef(regfit_bwd , 24)
-# same as Best subset
 
 plot(regfit_bwd_summary$cp, xlab = "Number of Variables", ylab = "Cp", type = "l")
 cp_min <- which.min(regfit_bwd_summary$cp)
@@ -117,9 +115,10 @@ plot(regfit_bwd_summary$bic, xlab = "Number of Variables", ylab = "BIC", type = 
 bic_min <- which.min(regfit_bwd_summary$bic) 
 points(bic_min, regfit_bwd_summary$bic[bic_min], col = "red", cex = 2, pch = 20)
 coef(regfit_bwd , 8)
-# schoolMS, Fjobteacher, studytime, failures, schoolsupyes, higheryes, Dalc, health
-# The best eight-variable models identified by the best subset selection and forward stepwise selection are the same
-# but are different from the backward stepwise selection.
+# same as Best subset
+
+# The best eight-variable models identified by the best subset selection and backward stepwise selection are the same
+# but are different from the forward stepwise selection.
 
 # Cross-validation
 predict.regsubsets <- function(object, newdata, id, ...) {
